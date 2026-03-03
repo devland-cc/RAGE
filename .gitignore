@@ -14,15 +14,25 @@ Cargo.lock
 .DS_Store
 Thumbs.db
 
-# Models (downloaded separately)
+# Models (downloaded/trained separately)
 models/*.onnx
 models/*.bin
+models/*.pt
+models/checkpoints/
+models/runs/
+
+# Training data (downloaded separately)
+data/
 
 # Python
 __pycache__/
 *.pyc
 .venv/
 venv/
+*.egg-info/
+
+# Conda
+conda-env/
 
 # Environment
 .env
