@@ -1,0 +1,23 @@
+[package]
+name = "rage-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "CLI for RAGE - Rust Aura Grabbing Engine"
+
+[[bin]]
+name = "rage"
+path = "src/main.rs"
+
+[dependencies]
+rage-core = { workspace = true }
+rage-audio = { workspace = true }
+rage-extractor = { workspace = true }
+rage-classifier = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+ndarray = { workspace = true }

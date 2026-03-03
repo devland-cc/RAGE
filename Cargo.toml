@@ -1,0 +1,41 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/rage-core",
+    "crates/rage-audio",
+    "crates/rage-extractor",
+    "crates/rage-classifier",
+    "crates/rage-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/danieldrehmer/rage"
+
+[workspace.dependencies]
+# Internal crates
+rage-core = { path = "crates/rage-core" }
+rage-audio = { path = "crates/rage-audio" }
+rage-extractor = { path = "crates/rage-extractor" }
+rage-classifier = { path = "crates/rage-classifier" }
+
+# Audio
+symphonia = { version = "0.5", features = ["mp3", "wav", "flac", "pcm"] }
+rubato = "0.16"
+
+# Numeric / DSP
+ndarray = "0.16"
+rustfft = "6.2"
+num-complex = "0.4"
+num-traits = "0.2"
+
+# CLI / Serialization
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

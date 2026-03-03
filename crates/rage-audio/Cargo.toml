@@ -1,0 +1,12 @@
+[package]
+name = "rage-audio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Audio decoding, resampling, and preprocessing for RAGE"
+
+[dependencies]
+rage-core = { workspace = true }
+symphonia = { workspace = true }
+rubato = { workspace = true }
+tracing = { workspace = true }
