@@ -208,33 +208,31 @@ def load_deam_annotations(annotations_dir: Path) -> dict:
 
     # DEAM static annotations are in CSV: song_id, valence_mean, arousal_mean
     # The values are on a 1-9 scale, we normalize to [-1, 1]
-    static_file = annotations_dir / "static_annotations_averaged_songs_1-2000.csv"
-    if not static_file.exists():
-        # Try alternative paths
-        for candidate in annotations_dir.rglob("*static*averaged*songs*.csv"):
-            static_file = candidate
-            break
+    # Find all static annotation CSVs (there are two: songs 1-2000 and 2000-2058)
+    static_files = sorted(annotations_dir.rglob("*static*averaged*songs*.csv"))
 
-    if not static_file.exists():
+    if not static_files:
         print(f"Warning: static annotations not found in {annotations_dir}")
         return annotations
 
-    with open(static_file) as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            song_id = row.get("song_id", "").strip()
-            valence = float(row.get("valence_mean", 5.0))
-            arousal = float(row.get("arousal_mean", 5.0))
+    for static_file in static_files:
+        print(f"  Loading annotations from {static_file.name}")
+        with open(static_file) as f:
+            reader = csv.DictReader(f, skipinitialspace=True)
+            for row in reader:
+                song_id = row.get("song_id", "").strip()
+                valence = float(row.get("valence_mean", 5.0))
+                arousal = float(row.get("arousal_mean", 5.0))
 
-            # Normalize from [1, 9] to [-1, 1]
-            valence_norm = (valence - 5.0) / 4.0
-            arousal_norm = (arousal - 5.0) / 4.0
+                # Normalize from [1, 9] to [-1, 1]
+                valence_norm = (valence - 5.0) / 4.0
+                arousal_norm = (arousal - 5.0) / 4.0
 
-            # Clamp to [-1, 1]
-            valence_norm = max(-1.0, min(1.0, valence_norm))
-            arousal_norm = max(-1.0, min(1.0, arousal_norm))
+                # Clamp to [-1, 1]
+                valence_norm = max(-1.0, min(1.0, valence_norm))
+                arousal_norm = max(-1.0, min(1.0, arousal_norm))
 
-            annotations[song_id] = (valence_norm, arousal_norm)
+                annotations[song_id] = (valence_norm, arousal_norm)
 
     return annotations
 

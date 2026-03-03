@@ -20,15 +20,9 @@ from pathlib import Path
 import requests
 from tqdm import tqdm
 
-# DEAM download URLs (Zenodo mirror)
-DEAM_AUDIO_URL = (
-    "https://zenodo.org/records/2616028/files/"
-    "DEAM_audio.zip?download=1"
-)
-DEAM_ANNOTATIONS_URL = (
-    "https://zenodo.org/records/2616028/files/"
-    "DEAM_Annotations.zip?download=1"
-)
+# DEAM download URLs (official CVML server)
+DEAM_AUDIO_URL = "https://cvml.unige.ch/databases/DEAM/DEAM_audio.zip"
+DEAM_ANNOTATIONS_URL = "https://cvml.unige.ch/databases/DEAM/DEAM_Annotations.zip"
 
 
 def download_file(url: str, dest: Path, desc: str = ""):
