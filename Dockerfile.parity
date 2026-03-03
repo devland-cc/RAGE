@@ -1,0 +1,29 @@
+FROM rust:1.84-slim-bookworm
+
+WORKDIR /app
+
+# Install system dependencies for both Rust (audio libs) and Python (librosa)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pkg-config \
+    libasound2-dev \
+    python3 \
+    python3-pip \
+    python3-venv \
+    libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up Python venv and install librosa
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+COPY scripts/parity/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+COPY . .
+
+# Step 1: Generate reference data with librosa
+RUN python3 scripts/parity/generate_reference.py
+
+# Step 2: Build the parity tests
+RUN cargo test --test parity --no-run 2>&1
+
+CMD ["cargo", "test", "--test", "parity", "--", "--nocapture"]
