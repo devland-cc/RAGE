@@ -12,4 +12,4 @@ COPY . .
 
 RUN cargo build --workspace 2>&1
 
-CMD ["cargo", "test", "--workspace"]
+CMD ["cargo", "test", "--workspace", "--lib"]

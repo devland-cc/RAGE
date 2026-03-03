@@ -60,20 +60,15 @@ impl ExtractCmd {
             let features = rage_extractor::extract_features(&audio, &config)?;
             let shape = features.log_mel_spectrogram.shape();
 
+            let n_frames = shape[1];
+
             match self.output {
                 OutputFormat::Table => {
-                    println!(
-                        "  Mel spectrogram: [{} mels, {} frames]",
-                        shape[0], shape[1]
-                    );
-
-                    // Summary statistics
-                    let mel = &features.log_mel_spectrogram;
-                    let min = mel.iter().cloned().fold(f32::INFINITY, f32::min);
-                    let max = mel.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
-                    let mean = mel.iter().sum::<f32>() / mel.len() as f32;
-
-                    println!("  Mel stats: min={min:.2} dB, max={max:.2} dB, mean={mean:.2} dB");
+                    println!("  Mel spectrogram:   [{} mels, {} frames]", shape[0], n_frames);
+                    println!("  MFCCs:             [{}, {}]", features.mfccs.shape()[0], n_frames);
+                    println!("  Chroma:            [{}, {}]", features.chroma.shape()[0], n_frames);
+                    println!("  Spectral contrast: [{}, {}]", features.spectral_contrast.shape()[0], n_frames);
+                    println!("  Summary vector:    {} dimensions", features.summary_vector.len());
                     println!();
                 }
                 OutputFormat::Json => {
@@ -82,11 +77,17 @@ impl ExtractCmd {
                         "duration_secs": audio.duration_secs(),
                         "sample_rate": audio.sample_rate,
                         "n_samples": audio.samples.len(),
-                        "mel_spectrogram": {
-                            "shape": [shape[0], shape[1]],
-                            "min_db": mel_stat_min(&features.log_mel_spectrogram),
-                            "max_db": mel_stat_max(&features.log_mel_spectrogram),
-                            "mean_db": mel_stat_mean(&features.log_mel_spectrogram),
+                        "n_frames": n_frames,
+                        "features": {
+                            "log_mel_spectrogram": [shape[0], n_frames],
+                            "mfccs": [features.mfccs.shape()[0], n_frames],
+                            "chroma": [features.chroma.shape()[0], n_frames],
+                            "spectral_centroid": n_frames,
+                            "spectral_rolloff": n_frames,
+                            "spectral_contrast": [features.spectral_contrast.shape()[0], n_frames],
+                            "rms_energy": n_frames,
+                            "zero_crossing_rate": n_frames,
+                            "summary_vector": features.summary_vector.len(),
                         }
                     });
                     println!("{}", serde_json::to_string_pretty(&result)?);
@@ -98,14 +99,3 @@ impl ExtractCmd {
     }
 }
 
-fn mel_stat_min(arr: &ndarray::Array2<f32>) -> f32 {
-    arr.iter().cloned().fold(f32::INFINITY, f32::min)
-}
-
-fn mel_stat_max(arr: &ndarray::Array2<f32>) -> f32 {
-    arr.iter().cloned().fold(f32::NEG_INFINITY, f32::max)
-}
-
-fn mel_stat_mean(arr: &ndarray::Array2<f32>) -> f32 {
-    arr.iter().sum::<f32>() / arr.len() as f32
-}
