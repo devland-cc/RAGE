@@ -2,7 +2,6 @@ target/
 data/
 models/checkpoints/
 models/runs/
-models/*.onnx
 models/*.pt
 .git/
 .venv/

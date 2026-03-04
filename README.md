@@ -128,7 +128,17 @@ python scripts/training/export_onnx.py \
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/my-feature`)
 3. Make your changes
-4. Run the test suite: `docker build -t rage . && docker run rage`
+4. Run the test suite:
+   ```bash
+   # Local
+   cargo test --workspace --lib
+
+   # Or via Docker
+   docker build -t rage . && docker run rage
+
+   # Parity tests (requires Docker — compares against librosa)
+   docker build -f Dockerfile.parity -t rage-parity . && docker run rage-parity
+   ```
 5. Submit a pull request
 
 ### Code style
