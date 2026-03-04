@@ -1,4 +1,4 @@
-# RAGE - Rust Aura Grabbing Engine
+# RAGE - Rust Aura-Gathering Engine
 
 A lightweight, pure-Rust system for analyzing the mood and emotion of music. RAGE extracts audio features and classifies mood/theme tags and valence-arousal values from audio files.
 
