@@ -113,6 +113,25 @@ def process_track(args):
     return True
 
 
+def resolve_audio_path(audio_dir: Path, rel_path: str) -> Path | None:
+    """Resolve an audio file path, handling .low.mp3 variants.
+
+    The annotation TSV has PATH like '48/948.mp3', but low-quality
+    downloads use '48/948.low.mp3'. Try both variants.
+    """
+    direct = audio_dir / rel_path
+    if direct.exists():
+        return direct
+
+    # Try .low.mp3 variant
+    stem = direct.stem  # e.g. "948"
+    low_path = direct.parent / f"{stem}.low.mp3"
+    if low_path.exists():
+        return low_path
+
+    return None
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Preprocess MTG-Jamendo: compute log-mel spectrograms"
@@ -128,20 +147,32 @@ def main():
     splits_dir = Path(args.splits_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Find all audio files
-    audio_files = sorted(
-        list(audio_dir.glob("**/*.mp3"))
-        + list(audio_dir.glob("**/*.wav"))
-        + list(audio_dir.glob("**/*.flac"))
-    )
-    print(f"Found {len(audio_files)} audio files")
-
-    # Build processing tasks
+    # Parse annotation TSVs to find tracks and their audio paths
     tasks = []
-    for audio_path in audio_files:
-        track_id = audio_path.stem
-        output_path = output_dir / f"{track_id}.npy"
-        tasks.append((audio_path, output_path))
+    skipped = 0
+    for split_file in sorted(splits_dir.glob("*.tsv")):
+        if split_file.name.endswith("_processed.tsv"):
+            continue
+        with open(split_file) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("TRACK_ID"):
+                    continue
+                parts = line.split("\t")
+                if len(parts) < 6:
+                    continue
+                track_id = parts[0]  # e.g. "track_0000948"
+                rel_path = parts[3]  # e.g. "48/948.mp3"
+
+                audio_path = resolve_audio_path(audio_dir, rel_path)
+                if audio_path is None:
+                    skipped += 1
+                    continue
+
+                output_path = output_dir / f"{track_id}.npy"
+                tasks.append((audio_path, output_path))
+
+    print(f"Found {len(tasks)} tracks with audio ({skipped} skipped)")
 
     # Process with multiprocessing
     success = 0
@@ -158,25 +189,31 @@ def main():
 
     # Rewrite split files with npy filenames
     for split_file in splits_dir.glob("*.tsv"):
-        rewrite_split_with_npy(split_file, output_dir)
+        if not split_file.name.endswith("_processed.tsv"):
+            rewrite_split_with_npy(split_file, output_dir)
 
 
 def rewrite_split_with_npy(split_file: Path, mel_dir: Path):
-    """Rewrite a split file to include npy filenames and normalized tags."""
+    """Rewrite a split file to include npy filenames and normalized tags.
+
+    Input format: TRACK_ID \\t ARTIST_ID \\t ALBUM_ID \\t PATH \\t DURATION \\t TAGS
+    Output format: TRACK_ID \\t NPY_FILENAME \\t tag1,tag2,...
+    """
     output_lines = []
     with open(split_file) as f:
         for line in f:
             line = line.strip()
-            if not line or line.startswith("#"):
+            if not line or line.startswith("TRACK_ID"):
                 continue
             parts = line.split("\t")
-            if len(parts) < 2:
+            if len(parts) < 6:
                 continue
             track_id = parts[0]
+            tags_str = parts[5]  # e.g. "mood/theme---background"
             tags = [
-                t.split("---")[1] if "---" in t else t for t in parts[1:]
+                t.split("---")[1] if "---" in t else t
+                for t in tags_str.split(",")
             ]
-            # Filter to only mood/theme tags
             valid_tags = [t for t in tags if t in MOOD_TAGS]
             if not valid_tags:
                 continue
@@ -190,7 +227,6 @@ def rewrite_split_with_npy(split_file: Path, mel_dir: Path):
                 f"{track_id}\t{npy_name}\t{','.join(valid_tags)}"
             )
 
-    # Write processed split
     processed_path = split_file.parent / f"{split_file.stem}_processed.tsv"
     with open(processed_path, "w") as f:
         f.write("\n".join(output_lines) + "\n")
