@@ -1,0 +1,13 @@
+target/
+data/
+models/checkpoints/
+models/runs/
+models/*.onnx
+models/*.pt
+.git/
+.venv/
+venv/
+conda-env/
+__pycache__/
+*.pyc
+.DS_Store

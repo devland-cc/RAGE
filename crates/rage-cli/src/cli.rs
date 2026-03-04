@@ -2,7 +2,10 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use rage_classifier::Classifier;
 use rage_core::ExtractionConfig;
+
+use crate::output;
 
 #[derive(Parser)]
 #[command(
@@ -17,10 +20,31 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Command {
-    /// Extract audio features from a file
+    /// Analyze mood and emotion of audio files
+    Analyze(AnalyzeCmd),
+    /// Extract audio features from a file (debug/development)
     Extract(ExtractCmd),
     /// Show version and model info
     Info,
+}
+
+#[derive(Parser)]
+pub struct AnalyzeCmd {
+    /// Audio file path(s)
+    #[arg(required = true)]
+    pub files: Vec<PathBuf>,
+
+    /// Path to ONNX models directory
+    #[arg(long, default_value = "models")]
+    pub model_dir: PathBuf,
+
+    /// Number of top mood tags to show
+    #[arg(long, default_value = "10")]
+    pub top_k: usize,
+
+    /// Output format
+    #[arg(short, long, default_value = "table")]
+    pub output: OutputFormat,
 }
 
 #[derive(Parser)]
@@ -38,6 +62,31 @@ pub struct ExtractCmd {
 pub enum OutputFormat {
     Table,
     Json,
+}
+
+impl AnalyzeCmd {
+    pub fn run(&self) -> Result<()> {
+        let config = ExtractionConfig::default();
+        let mut classifier = Classifier::from_dir(&self.model_dir)?;
+
+        for path in &self.files {
+            let filename = path
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| path.display().to_string());
+
+            let audio = rage_audio::load_audio(path, &config)?;
+            let features = rage_extractor::extract_features(&audio, &config)?;
+            let result = classifier.classify(&features, &filename)?;
+
+            match self.output {
+                OutputFormat::Table => output::print_emotion_table(&result, self.top_k),
+                OutputFormat::Json => output::print_emotion_json(&result)?,
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl ExtractCmd {
@@ -98,4 +147,3 @@ impl ExtractCmd {
         Ok(())
     }
 }
-

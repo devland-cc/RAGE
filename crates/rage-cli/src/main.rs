@@ -13,6 +13,7 @@ fn main() -> Result<()> {
     let args = cli::Cli::parse();
 
     match args.command {
+        cli::Command::Analyze(cmd) => cmd.run()?,
         cli::Command::Extract(cmd) => cmd.run()?,
         cli::Command::Info => {
             println!("RAGE - Rust Aura Grabbing Engine v{}", env!("CARGO_PKG_VERSION"));
