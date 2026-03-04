@@ -30,17 +30,20 @@ All extraction parameters are aligned with librosa for training/inference parity
 - RMS energy, zero-crossing rate
 - 294-dimensional summary vector (42 features x 7 statistics)
 
-### Models (Training)
+### Pre-trained Models (included)
 
-Two PyTorch models trained on Apple Silicon (MPS), exported to ONNX:
+RAGE ships with two ONNX models in `models/` — no extra downloads or setup needed:
 
-- **MoodTagger**: 5-layer CNN for 56 mood/theme tags (MTG-Jamendo dataset)
-- **ValenceArousalModel**: Dual-branch CNN+MLP for continuous valence-arousal prediction (DEAM dataset)
+| Model | File | Description |
+|-------|------|-------------|
+| **MoodTagger** | `mood_tagger.onnx` (8.7 MB) | 5-layer CNN predicting 56 mood/theme tags (trained on MTG-Jamendo) |
+| **ValenceArousalModel** | `valence_arousal.onnx` (10 MB) | Dual-branch CNN+MLP predicting continuous valence and arousal (trained on DEAM) |
 
 ## Prerequisites
 
 - **Rust toolchain** (1.75+ recommended)
-- **Python 3.11+** with conda (only needed for model retraining)
+
+That's it. The pre-trained models are already in the repo. Python is only needed if you want to retrain the models yourself.
 
 ## Quick Start
 
@@ -92,7 +95,7 @@ cargo run --release -- extract song.mp3
 cargo run --release -- extract --output json song.mp3
 ```
 
-### Train models (Mac with Apple Silicon)
+### Retrain models (optional, Mac with Apple Silicon)
 
 ```bash
 # Set up Python environment
