@@ -2,7 +2,7 @@
 
 A lightweight, pure-Rust system for analyzing the mood and emotion of music. RAGE extracts audio features and classifies mood/theme tags and valence-arousal values from audio files.
 
-> **Status**: Feature extraction pipeline is complete and parity-tested against librosa. Model training scripts are ready. ML inference integration is in progress.
+> **Status**: Fully functional — clone, build, and analyze music out of the box. Pre-trained ONNX models are included in the repo.
 
 ## Architecture
 
@@ -14,7 +14,7 @@ crates/
   rage-audio/       Audio decoding (Symphonia), resampling (Rubato), normalization
   rage-extractor/   Feature extraction: STFT, mel spectrogram, MFCCs, chroma,
                     spectral features, temporal features, 294-dim summary vector
-  rage-classifier/  ML inference (planned: Burn + ONNX models)
+  rage-classifier/  ML inference via ONNX Runtime (ort crate)
   rage-cli/         CLI binary
 ```
 
@@ -39,32 +39,57 @@ Two PyTorch models trained on Apple Silicon (MPS), exported to ONNX:
 
 ## Prerequisites
 
-- **Docker** (for building and testing the Rust workspace)
-- **Python 3.11+** with conda (for model training on Mac)
+- **Rust toolchain** (1.75+ recommended)
+- **Python 3.11+** with conda (only needed for model retraining)
 
 ## Quick Start
 
-### Build and test with Docker
+```bash
+# Clone and build
+git clone https://github.com/devland-cc/RAGE.git
+cd RAGE
+cargo build --release
+```
+
+### Analyze music
 
 ```bash
-# Build the workspace
-docker build -t rage .
+# Analyze a song (table output)
+cargo run --release -- analyze song.mp3
 
-# Run unit tests
-docker run rage
+# JSON output
+cargo run --release -- analyze --output json song.mp3
+
+# Multiple files
+cargo run --release -- analyze song1.mp3 song2.flac song3.wav
+
+# Custom model directory and top-k tags
+cargo run --release -- analyze song.mp3 --model-dir models/ --top-k 15
+```
+
+Example output:
+```
+  song.mp3
+
+  Valence: +0.148  (neutral)
+  Arousal: +0.035  (moderate)
+
+  Top Mood Tags:
+     1. love             0.190
+     2. ballad           0.127
+     3. energetic        0.085
+     4. dark             0.031
+     5. melodic          0.029
 ```
 
 ### Feature extraction (CLI)
 
 ```bash
 # Table output
-rage extract song.mp3
+cargo run --release -- extract song.mp3
 
 # JSON output
-rage extract --output json song.mp3
-
-# Multiple files
-rage extract song1.mp3 song2.flac song3.wav
+cargo run --release -- extract --output json song.mp3
 ```
 
 ### Train models (Mac with Apple Silicon)
@@ -127,7 +152,7 @@ at your option.
 - **MTG-Jamendo mood tagger weights**: Subject to MTG-Jamendo dataset terms (CC BY-NC-SA 4.0 for audio)
 - **DEAM valence-arousal weights**: Subject to DEAM dataset terms (CC BY-NC 4.0)
 
-Model weights are distributed separately from the source code.
+Pre-trained model weights are included in the repository under `models/`.
 
 ---
 
