@@ -85,6 +85,45 @@ Example output:
      5. melodic          0.029
 ```
 
+### Deep analysis
+
+Deep analysis processes the entire song and generates a `.rage` file containing per-beat BPM/key tracking and segmented emotion analysis.
+
+```bash
+# Deep analysis → generates song.rage
+cargo run --release -- deep song.mp3
+
+# Print summary to stdout as well
+cargo run --release -- deep song.mp3 --print
+
+# Custom segment length and output directory
+cargo run --release -- deep song.mp3 --segment-secs 30 --output-dir results/
+```
+
+Example summary output:
+```
+  song.mp3
+  Duration: 240.1s
+
+  Dominant BPM: 104
+  Dominant Key: E major
+
+  Avg Valence: +0.503
+  Avg Arousal: +0.534
+
+  Top Moods:
+     1. energetic        0.164
+     2. epic             0.102
+     3. dark             0.089
+     4. action           0.084
+     5. melodic          0.067
+
+  Beats: 395
+  Segments: 12
+```
+
+See [RAGE_FORMAT.md](RAGE_FORMAT.md) for the `.rage` file format specification.
+
 ### Feature extraction (CLI)
 
 ```bash

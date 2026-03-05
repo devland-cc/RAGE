@@ -5,7 +5,7 @@ use clap::{Parser, Subcommand};
 use rage_classifier::Classifier;
 use rage_core::ExtractionConfig;
 
-use crate::output;
+use crate::{deep, output, rage_file};
 
 #[derive(Parser)]
 #[command(
@@ -22,6 +22,8 @@ pub struct Cli {
 pub enum Command {
     /// Analyze mood and emotion of audio files
     Analyze(AnalyzeCmd),
+    /// Deep analysis: per-beat BPM/key + segmented emotion → .rage file
+    Deep(DeepCmd),
     /// Extract audio features from a file (debug/development)
     Extract(ExtractCmd),
     /// Show version and model info
@@ -58,6 +60,33 @@ pub struct ExtractCmd {
     pub output: OutputFormat,
 }
 
+#[derive(Parser)]
+pub struct DeepCmd {
+    /// Audio file path(s)
+    #[arg(required = true)]
+    pub files: Vec<PathBuf>,
+
+    /// Path to ONNX models directory
+    #[arg(long, default_value = "models")]
+    pub model_dir: PathBuf,
+
+    /// Output directory for .rage files (default: same as input file)
+    #[arg(long)]
+    pub output_dir: Option<PathBuf>,
+
+    /// Segment length in seconds for emotion analysis
+    #[arg(long, default_value = "20")]
+    pub segment_secs: f32,
+
+    /// Number of top mood tags per segment
+    #[arg(long, default_value = "5")]
+    pub top_k: usize,
+
+    /// Also print summary to stdout
+    #[arg(long)]
+    pub print: bool,
+}
+
 #[derive(Clone, clap::ValueEnum)]
 pub enum OutputFormat {
     Table,
@@ -82,6 +111,52 @@ impl AnalyzeCmd {
             match self.output {
                 OutputFormat::Table => output::print_emotion_table(&result, self.top_k),
                 OutputFormat::Json => output::print_emotion_json(&result)?,
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl DeepCmd {
+    pub fn run(&self) -> Result<()> {
+        let config = ExtractionConfig::default();
+        let mut classifier = Classifier::from_dir(&self.model_dir)?;
+
+        for path in &self.files {
+            let filename = path
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| path.display().to_string());
+
+            println!("Deep analysis: {filename}");
+
+            let audio = rage_audio::load_audio(path, &config)?;
+
+            let analysis = deep::run_deep_analysis(
+                &audio,
+                &mut classifier,
+                &config,
+                &filename,
+                self.segment_secs,
+                self.top_k,
+            )?;
+
+            // Determine output path
+            let output_path = if let Some(ref dir) = self.output_dir {
+                std::fs::create_dir_all(dir)?;
+                dir.join(path.file_stem().unwrap_or_default())
+                    .with_extension("rage")
+            } else {
+                path.with_extension("rage")
+            };
+
+            rage_file::write_rage_file(&analysis, &output_path)?;
+            println!("  Written: {}", output_path.display());
+
+            if self.print {
+                println!();
+                rage_file::print_deep_summary(&analysis);
             }
         }
 

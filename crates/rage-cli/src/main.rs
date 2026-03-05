@@ -1,5 +1,7 @@
 mod cli;
+mod deep;
 mod output;
+mod rage_file;
 
 use anyhow::Result;
 use clap::Parser;
@@ -14,6 +16,7 @@ fn main() -> Result<()> {
 
     match args.command {
         cli::Command::Analyze(cmd) => cmd.run()?,
+        cli::Command::Deep(cmd) => cmd.run()?,
         cli::Command::Extract(cmd) => cmd.run()?,
         cli::Command::Info => {
             println!("RAGE - Rust Aura Grabbing Engine v{}", env!("CARGO_PKG_VERSION"));

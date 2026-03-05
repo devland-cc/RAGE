@@ -86,6 +86,58 @@ pub fn extract_features(
     })
 }
 
+/// Extract features from an arbitrary audio slice (no center-cropping).
+///
+/// Used by deep analysis to process segments of any length.
+pub fn extract_features_window(
+    samples: &[f32],
+    config: &ExtractionConfig,
+) -> Result<FeatureSet, RageError> {
+    if samples.is_empty() {
+        return Err(RageError::Extraction("empty audio slice".into()));
+    }
+
+    // STFT — no cropping, use full slice
+    let magnitude = stft::stft_magnitude(samples, config.n_fft, config.hop_length);
+    let power = stft::power_spectrum(&magnitude);
+
+    // Mel spectrogram → log-mel
+    let mel_spec = mel::mel_spectrogram(&power, config);
+    let log_mel = mel::power_to_db(&mel_spec);
+
+    // MFCCs
+    let mfccs = mfcc::mfcc(&log_mel, config.n_mfcc);
+
+    // Chroma
+    let chroma_feat = chroma::chroma(&magnitude, config.sample_rate, config.n_fft);
+
+    // Spectral features
+    let centroid = spectral::spectral_centroid(&magnitude, config.sample_rate, config.n_fft);
+    let rolloff = spectral::spectral_rolloff(&magnitude, config.sample_rate, config.n_fft, 0.85);
+    let contrast = spectral::spectral_contrast(&power, config.sample_rate, config.n_fft);
+
+    // Temporal features
+    let rms = temporal::rms_energy(samples, config.n_fft, config.hop_length);
+    let zcr = temporal::zero_crossing_rate(samples, config.n_fft, config.hop_length);
+
+    // Build summary vector
+    let summary_vector = build_summary_vector(
+        &mfccs, &chroma_feat, &centroid, &rolloff, &contrast, &rms, &zcr,
+    );
+
+    Ok(FeatureSet {
+        log_mel_spectrogram: log_mel,
+        mfccs,
+        chroma: chroma_feat,
+        spectral_centroid: centroid,
+        spectral_rolloff: rolloff,
+        spectral_contrast: contrast,
+        rms_energy: rms,
+        zero_crossing_rate: zcr,
+        summary_vector,
+    })
+}
+
 /// Compute 7 summary statistics for a 1-D time series.
 /// Returns: [mean, std, min, max, median, skewness, kurtosis]
 fn compute_stats(values: &[f32]) -> [f32; 7] {
