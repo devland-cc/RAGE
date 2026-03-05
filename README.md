@@ -8,6 +8,12 @@ A lightweight, pure-Rust system for analyzing the mood and emotion of music. RAG
 
 ## Installation
 
+### Homebrew (macOS / Linux)
+
+```bash
+brew install devland-cc/tap/rage
+```
+
 ### Download a pre-built binary
 
 Grab the latest release for your platform from the [Releases page](https://github.com/devland-cc/RAGE/releases):
