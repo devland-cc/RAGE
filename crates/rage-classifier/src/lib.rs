@@ -7,6 +7,11 @@ use rage_core::types::{EmotionResult, MoodPrediction, ValenceArousal};
 use rage_core::{MoodTag, RageError};
 use rage_extractor::FeatureSet;
 
+/// Embedded mood tagger model bytes (compiled into the binary).
+static MOOD_TAGGER_BYTES: &[u8] = include_bytes!("../../../models/mood_tagger.onnx");
+/// Embedded valence-arousal model bytes (compiled into the binary).
+static VA_BYTES: &[u8] = include_bytes!("../../../models/valence_arousal.onnx");
+
 /// Expected number of time frames for the ONNX models (30s at 22050Hz / 512 hop).
 const MODEL_N_FRAMES: usize = 1292;
 /// Number of mel bins.
@@ -56,6 +61,30 @@ impl Classifier {
             .and_then(|b| b.with_intra_threads(1))
             .and_then(|b| b.commit_from_file(&va_path))
             .map_err(|e| RageError::Inference(format!("failed to load V-A model: {e}")))?;
+
+        Ok(Self {
+            mood_session,
+            va_session,
+        })
+    }
+
+    /// Create a classifier using models embedded in the binary at compile time.
+    ///
+    /// This is the default when no `--model-dir` is specified on the CLI.
+    pub fn embedded() -> Result<Self, RageError> {
+        let mood_session = Session::builder()
+            .and_then(|b| b.with_intra_threads(1))
+            .and_then(|b| b.commit_from_memory(MOOD_TAGGER_BYTES))
+            .map_err(|e| {
+                RageError::Inference(format!("failed to load embedded mood tagger: {e}"))
+            })?;
+
+        let va_session = Session::builder()
+            .and_then(|b| b.with_intra_threads(1))
+            .and_then(|b| b.commit_from_memory(VA_BYTES))
+            .map_err(|e| {
+                RageError::Inference(format!("failed to load embedded V-A model: {e}"))
+            })?;
 
         Ok(Self {
             mood_session,

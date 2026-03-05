@@ -10,7 +10,7 @@ use crate::{deep, output, rage_file};
 #[derive(Parser)]
 #[command(
     name = "rage",
-    about = "RAGE - Rust Aura Grabbing Engine\nAnalyze the mood and emotion of music",
+    about = "RAGE - Rust Aura-Gathering Engine\nAnalyze the mood and emotion of music",
     version
 )]
 pub struct Cli {
@@ -36,9 +36,9 @@ pub struct AnalyzeCmd {
     #[arg(required = true)]
     pub files: Vec<PathBuf>,
 
-    /// Path to ONNX models directory
-    #[arg(long, default_value = "models")]
-    pub model_dir: PathBuf,
+    /// Path to ONNX models directory (uses embedded models if omitted)
+    #[arg(long)]
+    pub model_dir: Option<PathBuf>,
 
     /// Number of top mood tags to show
     #[arg(long, default_value = "10")]
@@ -66,9 +66,9 @@ pub struct DeepCmd {
     #[arg(required = true)]
     pub files: Vec<PathBuf>,
 
-    /// Path to ONNX models directory
-    #[arg(long, default_value = "models")]
-    pub model_dir: PathBuf,
+    /// Path to ONNX models directory (uses embedded models if omitted)
+    #[arg(long)]
+    pub model_dir: Option<PathBuf>,
 
     /// Output directory for .rage files (default: same as input file)
     #[arg(long)]
@@ -93,10 +93,18 @@ pub enum OutputFormat {
     Json,
 }
 
+/// Create a classifier from either a custom model directory or embedded models.
+fn load_classifier(model_dir: &Option<PathBuf>) -> Result<Classifier> {
+    match model_dir {
+        Some(dir) => Ok(Classifier::from_dir(dir)?),
+        None => Ok(Classifier::embedded()?),
+    }
+}
+
 impl AnalyzeCmd {
     pub fn run(&self) -> Result<()> {
         let config = ExtractionConfig::default();
-        let mut classifier = Classifier::from_dir(&self.model_dir)?;
+        let mut classifier = load_classifier(&self.model_dir)?;
 
         for path in &self.files {
             let filename = path
@@ -121,7 +129,7 @@ impl AnalyzeCmd {
 impl DeepCmd {
     pub fn run(&self) -> Result<()> {
         let config = ExtractionConfig::default();
-        let mut classifier = Classifier::from_dir(&self.model_dir)?;
+        let mut classifier = load_classifier(&self.model_dir)?;
 
         for path in &self.files {
             let filename = path

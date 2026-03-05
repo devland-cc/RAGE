@@ -19,7 +19,7 @@ fn main() -> Result<()> {
         cli::Command::Deep(cmd) => cmd.run()?,
         cli::Command::Extract(cmd) => cmd.run()?,
         cli::Command::Info => {
-            println!("RAGE - Rust Aura Grabbing Engine v{}", env!("CARGO_PKG_VERSION"));
+            println!("RAGE - Rust Aura-Gathering Engine v{}", env!("CARGO_PKG_VERSION"));
             println!();
             println!("Supported formats: WAV, MP3, FLAC");
             println!("Mood tags: {} tags (MTG-Jamendo)", rage_core::MoodTag::ALL.len());

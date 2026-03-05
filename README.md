@@ -2,7 +2,39 @@
 
 A lightweight, pure-Rust system for analyzing the mood and emotion of music. RAGE extracts audio features and classifies mood/theme tags and valence-arousal values from audio files.
 
-> **Status**: Fully functional — clone, build, and analyze music out of the box. Pre-trained ONNX models are included in the repo.
+> **Status**: Fully functional — download, run, and analyze music out of the box. Pre-trained ONNX models are embedded in the binary.
+
+> *Analyze the mood, tempo, and key of any song with a single command — no Python, no setup, no API keys.*
+
+## Installation
+
+### Download a pre-built binary
+
+Grab the latest release for your platform from the [Releases page](https://github.com/devland-cc/RAGE/releases):
+
+| Platform | File |
+|----------|------|
+| macOS (Apple Silicon) | `rage-*-aarch64-apple-darwin.tar.gz` |
+| macOS (Intel) | `rage-*-x86_64-apple-darwin.tar.gz` |
+| Linux (x86_64) | `rage-*-x86_64-unknown-linux-gnu.tar.gz` |
+| Linux (aarch64) | `rage-*-aarch64-unknown-linux-gnu.tar.gz` |
+
+```bash
+# Example: download and install on macOS Apple Silicon
+tar xzf rage-1.1.1-aarch64-apple-darwin.tar.gz
+sudo mv rage /usr/local/bin/
+```
+
+> **macOS note**: If Gatekeeper blocks the binary, run: `xattr -d com.apple.quarantine rage`
+
+### Build from source
+
+```bash
+git clone https://github.com/devland-cc/RAGE.git
+cd RAGE
+cargo build --release
+# Binary is at target/release/rage
+```
 
 ## Architecture
 
@@ -39,35 +71,22 @@ RAGE ships with two ONNX models in `models/` — no extra downloads or setup nee
 | **MoodTagger** | `mood_tagger.onnx` (8.7 MB) | 5-layer CNN predicting 56 mood/theme tags (trained on MTG-Jamendo) |
 | **ValenceArousalModel** | `valence_arousal.onnx` (10 MB) | Dual-branch CNN+MLP predicting continuous valence and arousal (trained on DEAM) |
 
-## Prerequisites
-
-- **Rust toolchain** (1.75+ recommended)
-
-That's it. The pre-trained models are already in the repo. Python is only needed if you want to retrain the models yourself.
-
 ## Quick Start
-
-```bash
-# Clone and build
-git clone https://github.com/devland-cc/RAGE.git
-cd RAGE
-cargo build --release
-```
 
 ### Analyze music
 
 ```bash
-# Analyze a song (table output)
-cargo run --release -- analyze song.mp3
+# Analyze a song (models are embedded — no extra setup)
+rage analyze song.mp3
 
 # JSON output
-cargo run --release -- analyze --output json song.mp3
+rage analyze --output json song.mp3
 
 # Multiple files
-cargo run --release -- analyze song1.mp3 song2.flac song3.wav
+rage analyze song1.mp3 song2.flac song3.wav
 
-# Custom model directory and top-k tags
-cargo run --release -- analyze song.mp3 --model-dir models/ --top-k 15
+# Override with custom models
+rage analyze --model-dir /path/to/models song.mp3
 ```
 
 Example output:
@@ -91,13 +110,13 @@ Deep analysis processes the entire song and generates a `.rage` file containing 
 
 ```bash
 # Deep analysis → generates song.rage
-cargo run --release -- deep song.mp3
+rage deep song.mp3
 
 # Print summary to stdout as well
-cargo run --release -- deep song.mp3 --print
+rage deep song.mp3 --print
 
 # Custom segment length and output directory
-cargo run --release -- deep song.mp3 --segment-secs 30 --output-dir results/
+rage deep song.mp3 --segment-secs 30 --output-dir results/
 ```
 
 Example summary output:
@@ -128,10 +147,10 @@ See [RAGE_FORMAT.md](RAGE_FORMAT.md) for the `.rage` file format specification.
 
 ```bash
 # Table output
-cargo run --release -- extract song.mp3
+rage extract song.mp3
 
 # JSON output
-cargo run --release -- extract --output json song.mp3
+rage extract --output json song.mp3
 ```
 
 ### Retrain models (optional, Mac with Apple Silicon)
