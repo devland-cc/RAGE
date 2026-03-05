@@ -86,6 +86,8 @@ def evaluate(model, loader, criterion, device):
 def main():
     parser = argparse.ArgumentParser(description="Train MoodTagger")
     parser.add_argument("--data-dir", type=str, required=True)
+    parser.add_argument("--mel-dir", type=str, default=None,
+                        help="Override mel spectrogram directory (default: <data-dir>/mel_spectrograms)")
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--lr", type=float, default=1e-3)
@@ -99,6 +101,9 @@ def main():
 
     # Data
     data_dir = Path(args.data_dir)
+    mel_dir = Path(args.mel_dir) if args.mel_dir else data_dir / "mel_spectrograms"
+    print(f"Mel spectrogram directory: {mel_dir}")
+
     augment = SpecAugment(
         freq_mask_param=20,
         time_mask_param=80,
@@ -108,12 +113,12 @@ def main():
 
     train_ds = JamendoMoodDataset(
         split_file=str(data_dir / "splits" / "train_processed.tsv"),
-        mel_dir=str(data_dir / "mel_spectrograms"),
+        mel_dir=str(mel_dir),
         transform=augment,
     )
     val_ds = JamendoMoodDataset(
         split_file=str(data_dir / "splits" / "val_processed.tsv"),
-        mel_dir=str(data_dir / "mel_spectrograms"),
+        mel_dir=str(mel_dir),
         transform=None,
     )
 
