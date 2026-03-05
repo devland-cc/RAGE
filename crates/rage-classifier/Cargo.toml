@@ -11,6 +11,3 @@ rage-extractor = { workspace = true }
 ndarray = { workspace = true }
 ort = { workspace = true }
 anyhow = { workspace = true }
-
-[target.'cfg(target_os = "linux")'.dependencies]
-openssl = { workspace = true }

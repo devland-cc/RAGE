@@ -15,9 +15,10 @@ Grab the latest release for your platform from the [Releases page](https://githu
 | Platform | File |
 |----------|------|
 | macOS (Apple Silicon) | `rage-*-aarch64-apple-darwin.tar.gz` |
-| macOS (Intel) | `rage-*-x86_64-apple-darwin.tar.gz` |
 | Linux (x86_64) | `rage-*-x86_64-unknown-linux-gnu.tar.gz` |
 | Linux (aarch64) | `rage-*-aarch64-unknown-linux-gnu.tar.gz` |
+
+> **macOS (Intel)**: Pre-built binaries are not available for Intel Macs. Please [build from source](#build-from-source) instead.
 
 ```bash
 # Example: download and install on macOS Apple Silicon
