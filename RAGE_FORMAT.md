@@ -1,5 +1,7 @@
 # .RAGE File Format Specification (v0.0.1)
 
+> **Work in progress** — This format is in its early stages and is expected to evolve quickly. If you're thinking about building on it or contributing, please reach out at **rage@devland.cc** with suggestions, questions, or ideas.
+
 The `.rage` file is a plain-text format produced by `rage deep`. It contains a complete temporal analysis of a music track: per-beat BPM and key detection, segmented emotion analysis, and summary statistics.
 
 ## Structure
